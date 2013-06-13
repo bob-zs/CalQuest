@@ -4,6 +4,7 @@ var tileWidth = 60;
 var tileHeight = 60;
 var numHorizontalTiles = canvasWidth/tileWidth;
 var numVerticalTiles = canvasHeight/tileHeight;
+var exitLoc = {x: -1, y: -1};
 
 Game = {
 	start: function() {
@@ -18,6 +19,10 @@ Game = {
         	bush1: [0,2],
         	bush2: [1,2],
         	player: [0,3]
+    	});
+    	
+    	Crafty.sprite(60, "images/doorwaySprite.png", {
+        	doorway: [0,0]
     	});
     	
 		//loading scene
@@ -42,7 +47,7 @@ Game = {
 		// titleScreen scene
 		Crafty.scene("titleScreen", function(){
 	    	Crafty.e("2D, DOM, Image").image("images/titleScreen.png")	
-	    	
+
 	    	var title = Crafty.e("2D, DOM, Image, Tween")
 	    		.image("images/title.png")
 	    		.attr({alpha: 0.0, x: 108, y: 50}) //x=(canvasWidth-this._w)/2
@@ -96,7 +101,28 @@ Game = {
 		Crafty.c('Actor', {
 			init: function() {
 				this.requires('2D, DOM, Grid');
+			}
+		});
+		
+		Crafty.c('Exit', {
+			init: function() {
+				this.requires('Actor');
 			},
+			setID: function(ID) {
+				this.ID = ID;
+			}
+		});
+		
+		Crafty.c('Door', {
+			init: function() {
+				this.requires('Exit, doorway, SpriteAnimation').animate("phase", 0, 0, 2);
+				this.bind('EnterFrame', function(){
+					this.animate("phase", 80, -1)
+				});
+			},
+			setID: function(ID) {
+				this.ID = ID;
+			}
 		});
 		
 		Crafty.c('PlayerCharacter', {
@@ -104,6 +130,7 @@ Game = {
 				this.requires('Actor, Fourway, player, SpriteAnimation, Collision')
 				.fourway(3)
 				.stopOnSolids()
+				.exitOnDoors()
 				.animate('PlayerMovingUp', 3, 3, 5)
 				.animate('PlayerMovingRight', 9, 3, 11)
 				.animate('PlayerMovingDown', 0, 3, 2)
@@ -147,10 +174,22 @@ Game = {
 						}
 					}
 				}
+			},
+			
+			exitOnDoors: function(){
+				this.onHit('Door', this.exit);
+				return this;
+			},
+			
+			exit: function(ent) {
+				var door = ent[0].obj;
+				doorLoc = door.at();
+				Crafty.scene(door.ID);
 			}
 		});
 
 		function generateWorld() {
+			/* 
 			this.occupied = new Array(numHorizontalTiles);
 			for (var i = 0; i < numHorizontalTiles; i++) {
 				this.occupied[i] = new Array(numVerticalTiles);
@@ -158,13 +197,13 @@ Game = {
 					this.occupied[i][j] = false;
 				}
 			}
+			Change: OCCUPIED
+			*/
 	        //generate the grass along the x-axis
 	        for(var i = 0; i < numHorizontalTiles; i++) {
-	            //generate the grass along the y-axis
 	            for(var j = 0; j < numVerticalTiles; j++) {
 	                Crafty.e("Actor, grass"+Crafty.math.randomInt(1, 4)).at(i, j)
 	                
-	                //1/50 chance of drawing a flower and only not within the bushes
 	                if(i > 0 && i < (numHorizontalTiles-1) && j > 0 && j < (numVerticalTiles-1) && Crafty.math.randomInt(0, 50) > 49) {
 	                    Crafty.e("Actor, flower, SpriteAnimation")
 	                        .at(i, j)
@@ -174,33 +213,38 @@ Game = {
 	            }
 	        }
 	        
-	        //create the bushes along the x-axis which will form the boundaries
 	        for(var i = 0; i < numHorizontalTiles; i++) {
 	            Crafty.e("Actor, Solid, bush"+Crafty.math.randomInt(1,2))
 	                .at(i, 0)
 	            Crafty.e("Actor, Solid, bush"+Crafty.math.randomInt(1,2))
 	                .at(i, numVerticalTiles-1)
-	            this.occupied[i, 0] = this.occupied[i, numVerticalTiles-1] = true;
+	            // this.occupied[i, 0] = this.occupied[i, numVerticalTiles-1] = true; Change: OCCUPIED
 	        }
 	        
-	        //create the bushes along the y-axis
-	        //we need to start one more and one less to not overlap the previous bushes
 	        for(var i = 1; i < numVerticalTiles-1; i++) {
 	            Crafty.e("Actor, Solid, bush"+Crafty.math.randomInt(1,2))
 	                .at(0, i)
 	            Crafty.e("Actor, Solid, bush"+Crafty.math.randomInt(1,2))
 	                .at(numHorizontalTiles-1, i)
-	            this.occupied[0, i] = this.occupied[numHorizontalTiles-1, i] = true;
+	            // this.occupied[0, i] = this.occupied[numHorizontalTiles-1, i] = true; Change: OCCUPIED
 	        }
 	        
-	        return this.occupied;
+	        // return this.occupied; Change: OCCUPIED
 	    }
-
+		
 		//main scene
 		Crafty.scene("main" , function(){
-    		this.occupied = generateWorld();
-	        var player = Crafty.e("PlayerCharacter")
-	        	.at(5,5)
+    		generateWorld(); //this.occupied = generateWorld(); Change: OCCUPIED
+	        Crafty.e("PlayerCharacter").at(5,5)
+	        Crafty.e("Door").at(7, 2).setID("nextRoom");
+	        Crafty.e("Door").at(2, 8).setID("nextRoom");
+		});
+		
+		Crafty.scene("nextRoom", function(){
+			generateWorld(); //this.occupied = generateWorld(); Change: OCCUPIED
+			Crafty.e("PlayerCharacter").at(doorLoc.x, doorLoc.y);
+			Crafty.e("Door").at(5, 5).setID("main");
+	        Crafty.e("Door").at(3, 2).setID("main");
 		});
 		
 		Crafty.scene("loading");
