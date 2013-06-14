@@ -8857,12 +8857,12 @@ Crafty.extend({
 		 * Crafty.audio.play("explosion",1,0.5); //play sound once with volume of 50%
 		 * ~~~
 		 */
-		play : function(id, repeat, volume) {
+		play : function(id, repeat, volume, restart) {
 			if (repeat == 0 || !Crafty.support.audio || !this.sounds[id])
 				return;
 			var s = this.sounds[id];
 			s.volume = s.obj.volume = volume || Crafty.audio.volume;
-			if (s.obj.currentTime)
+			if (s.obj.currentTime && restart == true)
 				s.obj.currentTime = 0;
 			if (this.muted)
 				s.obj.volume = 0;
