@@ -10,32 +10,47 @@ Game = {
 	start: function() {
 		
 		Crafty.init(canvasWidth, canvasHeight);
-		Crafty.sprite(60, "images/crafty-sprite.png", {
-        	grass1: [0,0],
-        	grass2: [1,0],
-        	grass3: [2,0],
-        	grass4: [3,0],
-        	flower: [0,1],
-        	bush1: [0,2],
-        	bush2: [1,2],
-        	player: [0,3]
-    	});
-    	
-    	Crafty.sprite(60, "images/doorwaySprite.png", {
-        	doorway: [0,0]
-    	});
     	
 		//loading scene
 		Crafty.scene("loading", function() {
-	        Crafty.load(["images/crafty-sprite.png", 
-	        			"images/titleScreen.png", 
-	        			"images/newGame.png",
-	        			"images/newGameHover.png",
-	        			"images/loadGame.png",
-	        			"images/loadGameHover.png"],
+   				
+	        Crafty.load(["assets/images/crafty-sprite.png", 
+	        			"assets/images/titleScreen.png", 
+	        			"assets/images/newGame.png",
+	        			"assets/images/newGameHover.png",
+	        			"assets/images/loadGame.png",
+	        			"assets/images/loadGameHover.png",
+	        			"assets/sounds/doorSound.mp3",
+	        			"assets/sounds/doorSound.wav",
+	        			"assets/sounds/doorSound.ogg",
+	        			"assets/sounds/background.mp3",
+	        			"assets/sounds/background.wav",
+	        			"assets/sounds/background.ogg"],
 	        	function() {
+	        		Crafty.sprite(60, "assets/images/crafty-sprite.png", {
+			        	grass1: [0,0],
+			        	grass2: [1,0],
+			        	grass3: [2,0],
+			        	grass4: [3,0],
+			        	flower: [0,1],
+			        	bush1: [0,2],
+			        	bush2: [1,2],
+			        	player: [0,3]
+			    	});
+			    	Crafty.sprite(60, "assets/images/doorwaySprite.png", {
+			        	doorway: [0,0]
+	    			});
+	    			Crafty.audio.add({
+						background: ["assets/sounds/background.mp3",
+									"assets/sounds/background.wav",
+									"assets/sounds/background.ogg"],
+						doorSound: ["assets/sounds/doorSound.mp3",
+									"assets/sounds/doorSound.wav",
+									"assets/sounds/doorSound.ogg"]
+					});
+					Crafty.audio.play("background", -1);
 	            	Crafty.scene("titleScreen");
-	        });
+	        	});
 	        
 	        Crafty.background("#000");
 	        Crafty.e("2D, DOM, Text")
@@ -46,36 +61,36 @@ Game = {
 		
 		// titleScreen scene
 		Crafty.scene("titleScreen", function(){
-	    	Crafty.e("2D, DOM, Image").image("images/titleScreen.png")	
+	    	Crafty.e("2D, DOM, Image").image("assets/images/titleScreen.png")	
 
 	    	var title = Crafty.e("2D, DOM, Image, Tween")
-	    		.image("images/title.png")
+	    		.image("assets/images/title.png")
 	    		.attr({alpha: 0.0, x: 108, y: 50}) //x=(canvasWidth-this._w)/2
 	    		.tween({alpha: 1.0}, 100);
 	    	
 	    	var newGame = Crafty.e("2D, DOM, Mouse, Image, Tween")
-	    		.image("images/newGame.png")
+	    		.image("assets/images/newGame.png")
 	    		.attr({alpha: 0.0, x: 277, y: 400}) // x=(canvasWidth-this._w)/2
 	    		.tween({alpha: 1.0}, 100)
 	    		.bind("MouseOver", function(){
-	    			newGame.image("images/newGameHover.png");
+	    			newGame.image("assets/images/newGameHover.png");
 	    		})
 	    		.bind("MouseOut", function(){
-	    			newGame.image("images/newGame.png");
+	    			newGame.image("assets/images/newGame.png");
 	    		})
 	    		.bind("Click", function(){
 	    			Crafty.scene("main");
 	    		})
 	    		
 	    	var loadGame = Crafty.e("2D, DOM, Mouse, Image, Tween")
-	    		.image("images/loadGame.png")
+	    		.image("assets/images/loadGame.png")
 	    		.attr({alpha: 0.0, x: 277, y: 500}) // x=(canvasWidth-this._w)/2
 	    		.tween({alpha: 1.0}, 100)
 	    		.bind("MouseOver", function(){
-	    			loadGame.image("images/loadGameHover.png");
+	    			loadGame.image("assets/images/loadGameHover.png");
 	    		})
 	    		.bind("MouseOut", function(){
-	    			loadGame.image("images/loadGame.png");
+	    			loadGame.image("assets/images/loadGame.png");
 	    		})
 	    		.bind("Click", function(){
 	    			alert("load game scene");
@@ -116,12 +131,17 @@ Game = {
 		Crafty.c('Door', {
 			init: function() {
 				this.requires('Exit, doorway, SpriteAnimation').animate("phase", 0, 0, 2);
-				this.bind('EnterFrame', function(){
-					this.animate("phase", 80, -1)
-				});
+				this.animate("phase", 80, -1)
 			},
 			setID: function(ID) {
 				this.ID = ID;
+			}
+		});
+		
+		Crafty.c('Flower', {
+			init: function() {
+				this.requires('Actor, flower, SpriteAnimation').animate("wind", 0, 1, 3);
+				this.animate("wind", 80, -1)
 			}
 		});
 		
@@ -182,6 +202,7 @@ Game = {
 			},
 			
 			exit: function(ent) {
+				Crafty.audio.play("doorSound");
 				var door = ent[0].obj;
 				doorLoc = door.at();
 				Crafty.scene(door.ID);
@@ -205,10 +226,7 @@ Game = {
 	                Crafty.e("Actor, grass"+Crafty.math.randomInt(1, 4)).at(i, j)
 	                
 	                if(i > 0 && i < (numHorizontalTiles-1) && j > 0 && j < (numVerticalTiles-1) && Crafty.math.randomInt(0, 50) > 49) {
-	                    Crafty.e("Actor, flower, SpriteAnimation")
-	                        .at(i, j)
-	                        .animate("wind", 0, 1, 3)
-	                        .animate("wind", 80, -1);
+	                    Crafty.e("Flower").at(i, j);
 	                }
 	            }
 	        }
