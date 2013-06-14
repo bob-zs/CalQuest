@@ -8974,12 +8974,8 @@ Crafty.extend({
 		 * ~~~
 		 */
 		toggleMute : function() {
-			if (!this.muted) {
-				this._mute(true);
-			} else {
-				this._mute(false);
-			}
-
+			this._mute(!this.muted);
+			return this.muted;
 		},
 		/**@
 		 * #Crafty.audio.mute
