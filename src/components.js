@@ -13,13 +13,16 @@ var setUpComponents = function(){
 		            	volume.music_vol = 1.0
 		            	object.tween({w: 200}, 20);
 		            } else if (this._x + 5 > e.realX){
-		            	volume.music_vol = 1.0
+		            	volume.music_vol = 0
 		            	object.tween({w: 0}, 20);
 		            } else {
-		                volume.music_vol = (e.realX-(this._x+10))/200
+		                volume.music_vol = (e.realX-(this._x+5))/200
 		                object.tween({w: e.realX - (this._x + 5)}, 20);
 		            }
-		            Crafty.audio.play("background", -1, change, true)
+		            if (volume.music_vol == 0)
+		            	Crafty.audio.stop()
+		            else
+		            	Crafty.audio.play("background", -1, volume.music_vol, true)
 	            }
 	            else {
 	            	if (this._w + this._x - 5 < e.realX){
@@ -29,7 +32,7 @@ var setUpComponents = function(){
 		            	volume.sound_vol = 1.0
 		            	object.tween({w: 0}, 20);
 		            } else {
-		                volume.sound_vol = (e.realX-(this._x+10))/200
+		                volume.sound_vol = (e.realX-(this._x+5))/200
 		                object.tween({w: e.realX - (this._x + 5)}, 20);
 		            }
 	            }
@@ -92,7 +95,7 @@ var setUpComponents = function(){
 			.fourway(3)
 			.stopOnSolids()
 			.exitOnDoors()
-			.attr({z: 3})
+			.attr({z: 2})
 			.animate('PlayerMovingUp', 3, 3, 5)
 			.animate('PlayerMovingRight', 9, 3, 11)
 			.animate('PlayerMovingDown', 0, 3, 2)
@@ -140,7 +143,7 @@ var setUpComponents = function(){
 			this.onHit('Door', function(ent){
 				var door = ent[0].obj;
 				if (door.contains(this._x+(this._w/2)-5, this._y+(this._h/2)-5, 10, 10)){
-					Crafty.audio.play("doorSound");
+					Crafty.audio.play("doorSound", 1, volume.sound_vol, false);
 					exitLoc = door.at();
 					load_scene(door.ID, 40);
 				}
